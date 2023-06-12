@@ -13,13 +13,20 @@ const getUsers = (req, res) => {
 
 const getUserById = (req, res) => {
   User.findById(req.params.userId)
+    .orFail(new Error('WrongId'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.message.includes('Cast to ObjectId failed for value')) {
         res
+          .status(BAD_REQUEST)
+          .send({
+            message: 'Переданы некорректные данные при запросе пользователя.',
+          });
+      } else if (err.message === 'WrongId') {
+        res
           .status(NOT_FOUND)
           .send({
-            message: 'Запрашиваемый пользователь не найден.',
+            message: 'Пользователь по указанному _id не найден.',
           });
       } else {
         res

@@ -35,13 +35,20 @@ const createCard = (req, res) => {
 
 const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
+    .orFail(new Error('WrongId'))
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (err.message.includes('Cast to ObjectId failed for value')) {
         res
+          .status(BAD_REQUEST)
+          .send({
+            message: 'Переданы некорректные данные при удалении карточки.',
+          });
+      } else if (err.message === 'WrongId') {
+        res
           .status(NOT_FOUND)
           .send({
-            message: 'Карточка с указанным _id не найдена.',
+            message: 'Передан несуществующий _id карточки.',
           });
       } else {
         res
@@ -59,19 +66,20 @@ const likeCard = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(new Error('WrongId'))
     .then((card) => res.status(200).send(card))
     .catch((err) => {
-      if (!req.user._id) {
-        res
-          .status(BAD_REQUEST)
-          .send({
-            message: 'Переданы некорректные данные для постановки лайка.',
-          });
-      } else if (err.message.includes('Cast to ObjectId failed for value')) {
+      if (err.message === 'WrongId') {
         res
           .status(NOT_FOUND)
           .send({
             message: 'Передан несуществующий _id карточки.',
+          });
+      } else if (err.message.includes('Cast to ObjectId failed for value')) {
+        res
+          .status(BAD_REQUEST)
+          .send({
+            message: 'Переданы некорректные данные для постановки лайка.',
           });
       } else {
         res
@@ -89,19 +97,20 @@ const dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+    .orFail(new Error('WrongId'))
     .then((card) => res.status(200).send(card))
     .catch((err) => {
-      if (!req.user._id) {
-        res
-          .status(BAD_REQUEST)
-          .send({
-            message: 'Переданы некорректные данные для снятия лайка.',
-          });
-      } else if (err.message.includes('Cast to ObjectId failed for value')) {
+      if (err.message === 'WrongId') {
         res
           .status(NOT_FOUND)
           .send({
             message: 'Передан несуществующий _id карточки.',
+          });
+      } else if (err.message.includes('Cast to ObjectId failed for value')) {
+        res
+          .status(BAD_REQUEST)
+          .send({
+            message: 'Переданы некорректные данные для снятия лайка.',
           });
       } else {
         res
