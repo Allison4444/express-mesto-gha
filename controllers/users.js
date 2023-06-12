@@ -1,9 +1,11 @@
 const User = require('../models/user');
-const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../errors');
+const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/errors');
+
+const CREATED = 201;
 
 const getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.status(200).send(users))
+    .then((users) => res.send(users))
     .catch(() => res
       .status(INTERNAL_SERVER_ERROR)
       .send({
@@ -14,9 +16,9 @@ const getUsers = (req, res) => {
 const getUserById = (req, res) => {
   User.findById(req.params.userId)
     .orFail(new Error('WrongId'))
-    .then((user) => res.status(200).send(user))
+    .then((user) => res.send(user))
     .catch((err) => {
-      if (err.message.includes('Cast to ObjectId failed for value')) {
+      if (err.name === 'CastError') {
         res
           .status(BAD_REQUEST)
           .send({
@@ -42,9 +44,9 @@ const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
-    .then((user) => res.status(201).send(user))
+    .then((user) => res.status(CREATED).send(user))
     .catch((err) => {
-      if (err.message.includes('user validation failed')) {
+      if (err.name === 'ValidationError') {
         res
           .status(BAD_REQUEST)
           .send({
@@ -69,10 +71,9 @@ const updateUser = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: true,
     },
   )
-    .then((user) => res.status(200).send(user))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (!req.user._id) {
         res
@@ -80,7 +81,7 @@ const updateUser = (req, res) => {
           .send({
             message: 'Пользователь с указанным _id не найден.',
           });
-      } else if (err.message.includes('Validation failed')) {
+      } else if (err.name === 'ValidationError') {
         res
           .status(BAD_REQUEST)
           .send({
@@ -105,10 +106,9 @@ const changeUserAvatar = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: true,
     },
   )
-    .then((user) => res.status(200).send(user))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (!req.user._id) {
         res
@@ -116,7 +116,7 @@ const changeUserAvatar = (req, res) => {
           .send({
             message: 'Пользователь с указанным _id не найден.',
           });
-      } else if (err.message.includes('Validation failed')) {
+      } else if (err.name === 'ValidationError') {
         res
           .status(BAD_REQUEST)
           .send({

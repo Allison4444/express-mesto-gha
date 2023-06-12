@@ -1,11 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
 const router = require('./routes');
-const { NOT_FOUND } = require('./errors');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
+
+app.use(helmet());
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useNewUrlParser: true,
@@ -22,10 +24,6 @@ app.use((req, res, next) => {
 });
 
 app.use(router);
-
-app.use('*', (req, res) => {
-  res.status(NOT_FOUND).send({ message: 'Тут пусто' });
-});
 
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console

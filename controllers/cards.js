@@ -1,9 +1,11 @@
 const Card = require('../models/card');
-const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../errors');
+const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/errors');
+
+const CREATED = 201;
 
 const getCards = (req, res) => {
   Card.find({})
-    .then((cards) => res.status(200).send(cards))
+    .then((cards) => res.send(cards))
     .catch(() => res
       .status(INTERNAL_SERVER_ERROR)
       .send({
@@ -15,9 +17,9 @@ const createCard = (req, res) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.status(201).send(card))
+    .then((card) => res.status(CREATED).send(card))
     .catch((err) => {
-      if (err.message.includes('card validation failed')) {
+      if (err.name === 'ValidationError') {
         res
           .status(BAD_REQUEST)
           .send({
@@ -36,9 +38,9 @@ const createCard = (req, res) => {
 const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail(new Error('WrongId'))
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.send(card))
     .catch((err) => {
-      if (err.message.includes('Cast to ObjectId failed for value')) {
+      if (err.name === 'CastError') {
         res
           .status(BAD_REQUEST)
           .send({
@@ -67,7 +69,7 @@ const likeCard = (req, res) => {
     { new: true },
   )
     .orFail(new Error('WrongId'))
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.send(card))
     .catch((err) => {
       if (err.message === 'WrongId') {
         res
@@ -75,7 +77,7 @@ const likeCard = (req, res) => {
           .send({
             message: 'Передан несуществующий _id карточки.',
           });
-      } else if (err.message.includes('Cast to ObjectId failed for value')) {
+      } else if (err.name === 'CastError') {
         res
           .status(BAD_REQUEST)
           .send({
@@ -98,7 +100,7 @@ const dislikeCard = (req, res) => {
     { new: true },
   )
     .orFail(new Error('WrongId'))
-    .then((card) => res.status(200).send(card))
+    .then((card) => res.send(card))
     .catch((err) => {
       if (err.message === 'WrongId') {
         res
@@ -106,7 +108,7 @@ const dislikeCard = (req, res) => {
           .send({
             message: 'Передан несуществующий _id карточки.',
           });
-      } else if (err.message.includes('Cast to ObjectId failed for value')) {
+      } else if (err.name === 'CastError') {
         res
           .status(BAD_REQUEST)
           .send({
