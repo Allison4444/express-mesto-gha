@@ -36,9 +36,16 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .orFail(new Error('WrongId'))
-    .then((card) => res.send(card))
+    .then((card) => {
+      if (card.owner.toString() !== req.user._id) {
+        return Promise.reject(new Error('Недостаточно прав для удаления карточки'));
+      }
+
+      return Card.findByIdAndRemove(req.params.cardId);
+    })
+    .then((removedCard) => res.send(removedCard))
     .catch((err) => {
       if (err.name === 'CastError') {
         res
