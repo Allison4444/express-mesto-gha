@@ -14,7 +14,7 @@ router.get('/', getUsers);
 router.get('/me', celebrate({
   headers: Joi.object().keys({
     authorization: Joi.string().required(),
-  }),
+  }).options({ allowUnknown: true }),
 }), getCurrentUserInfo);
 
 router.get('/:userId', celebrate({
@@ -32,7 +32,7 @@ router.patch('/me', celebrate({
 
 router.patch('/me/avatar', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().uri(),
+    avatar: Joi.string().required().pattern(/^(http:\/\/|https:\/\/)(www\.)?[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+#?$/),
   }),
 }), changeUserAvatar);
 
