@@ -4,7 +4,6 @@ const User = require('../models/user');
 
 const { BadRequestError } = require('../utils/errors/BadRequestError');
 const { NotFoundError } = require('../utils/errors/NotFoundError');
-const { UnauthorizedError } = require('../utils/errors/UnauthorizedError');
 const { ConflictError } = require('../utils/errors/ConflictError');
 
 const CREATED = 201;
@@ -17,18 +16,15 @@ const getUsers = (req, res, next) => {
 
 const getUserById = (req, res, next) => {
   User.findById(req.params.userId)
-    .orFail(new Error('WrongId'))
+    .orFail(() => new NotFoundError('Пользователь по указанному _id не найден.'))
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError('Переданы некорректные данные при запросе пользователя.');
-      } else if (err.message === 'WrongId') {
-        throw new NotFoundError('Пользователь по указанному _id не найден.');
+        next(new BadRequestError('Переданы некорректные данные при запросе пользователя.'));
       } else {
         next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 const createUser = (req, res, next) => {
@@ -51,14 +47,13 @@ const createUser = (req, res, next) => {
     .then((user) => res.status(CREATED).send(user.deletePassword()))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Переданы некорректные данные при создании пользователя.');
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя.'));
       } else if (err.code === 11000) {
-        throw new ConflictError('При регистрации указан email, который уже существует на сервере.');
+        next(new ConflictError('При регистрации указан email, который уже существует на сервере.'));
       } else {
         next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 const updateUser = (req, res, next) => {
@@ -72,17 +67,15 @@ const updateUser = (req, res, next) => {
       runValidators: true,
     },
   )
+    .orFail(() => new NotFoundError('Пользователь с указанным _id не найден.'))
     .then((user) => res.send(user))
     .catch((err) => {
-      if (!req.user._id) {
-        throw new NotFoundError('Пользователь с указанным _id не найден.');
-      } else if (err.name === 'ValidationError') {
-        throw new BadRequestError('Переданы некорректные данные при обновлении профиля.');
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Переданы некорректные данные при обновлении профиля.'));
       } else {
         next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 const changeUserAvatar = (req, res, next) => {
@@ -96,17 +89,15 @@ const changeUserAvatar = (req, res, next) => {
       runValidators: true,
     },
   )
+    .orFail(() => new NotFoundError('Пользователь с указанным _id не найден.'))
     .then((user) => res.send(user))
     .catch((err) => {
-      if (!req.user._id) {
-        throw new NotFoundError('Пользователь с указанным _id не найден.');
-      } else if (err.name === 'ValidationError') {
-        throw new BadRequestError('Переданы некорректные данные при обновлении аватара.');
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Переданы некорректные данные при обновлении аватара.'));
       } else {
         next(err);
       }
-    })
-    .catch(next);
+    });
 };
 
 const login = (req, res, next) => {
@@ -121,9 +112,6 @@ const login = (req, res, next) => {
       );
 
       res.send({ token });
-    })
-    .catch(() => {
-      throw new UnauthorizedError('Неправильные почта или пароль.');
     })
     .catch(next);
 };

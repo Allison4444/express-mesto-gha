@@ -1,6 +1,8 @@
 const { celebrate, Joi } = require('celebrate');
 const router = require('express').Router();
 
+const { regExpAvatar } = require('../utils/regularExpressions');
+
 const {
   getUsers,
   getUserById,
@@ -11,15 +13,11 @@ const {
 
 router.get('/', getUsers);
 
-router.get('/me', celebrate({
-  headers: Joi.object().keys({
-    authorization: Joi.string().required(),
-  }).options({ allowUnknown: true }),
-}), getCurrentUserInfo);
+router.get('/me', getCurrentUserInfo);
 
 router.get('/:userId', celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().alphanum().length(24),
+    userId: Joi.string().length(24).hex().required(),
   }),
 }), getUserById);
 
@@ -32,7 +30,7 @@ router.patch('/me', celebrate({
 
 router.patch('/me/avatar', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().pattern(/^(http:\/\/|https:\/\/)(www\.)?[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+#?$/),
+    avatar: Joi.string().required().pattern(regExpAvatar),
   }),
 }), changeUserAvatar);
 

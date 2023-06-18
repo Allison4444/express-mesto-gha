@@ -9,7 +9,6 @@ module.exports = (err, req, res, next) => {
       message: statusCode === INTERNAL_SERVER_ERROR
         ? 'На сервере произошла ошибка'
         : message,
-      qwe: err.message,
     });
 
   next();
